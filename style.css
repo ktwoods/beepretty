@@ -1,0 +1,32 @@
+.accordion-button {
+  font-size: 1.5rem;
+}
+h2 {
+  font-size: 1.5rem;
+}
+.accordion-item:first-of-type, .accordion-item:first-of-type .accordion-button {
+  border-top-left-radius: unset;
+  border-top-right-radius: unset;
+}
+
+#aboutCard {
+  border: unset;
+  background-color: unset;
+}
+#aboutCard .card-header {
+  border-bottom: unset;
+  padding: unset;
+  background-color: unset;
+}
+#aboutToggle {
+  font-size: 1.5rem;
+}
+#aboutToggle:focus {
+  border-color: var(--bs-dark);
+}
+#aboutToggle:hover {
+  color: var(--bs-secondary) !important;
+}
+#aboutText {
+  border-top-left-radius: 0 !important;
+}
