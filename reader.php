@@ -14,6 +14,13 @@
       'abdomen','terg(um|al|a|ite)','stern(um|al|a|ite)','fascia(e|)','pygidium'
     )
   );
+
+  const SECTION_START = '<div class="card mb-3 border-dark"><div class="card-header bg-dark text-light"><h2 class="card-title mb-0">';
+  const HEAD_END_UL_START = '</h2></div><ul class="list-group list-group-flush">';
+  const LI_START = '<li class="list-group-item">';
+  const LI_END = '</li>';
+  const SECTION_END = '</ul></div>';
+
   // Convert dictionary into proper regex search strings for each region
   foreach ($anatomy_nouns as $region_name => $body_region) {
     ${$region_name.'_regex'} = '/';
@@ -37,14 +44,16 @@
     }
     $orig_desc = filter_input(INPUT_POST, 'desc', FILTER_CALLBACK, ['options' => 'sanitize_desc']);
 
-    if ($orig_desc) { // If there's valid text left after sanitization:
+    // If there's valid text left after sanitization:
+    if ($orig_desc) {
       // Split into list items at semicolons
       $lines = explode('; ', $orig_desc);
 
       $next_region = 'head';
       foreach ($lines as $key => &$line) {
         // Capitalize the first letter and make it a list item
-        $line = ($key === 0 ? '<h2>General</h2><ul><li>'.ucfirst($lines[0]).'</li>' : '<li>'.ucfirst($line).'</li>');
+        $line = ($key === 0 ? SECTION_START.'General'.HEAD_END_UL_START : '')
+          .LI_START.($key === 0 ? ucfirst($lines[0]) : ucfirst($line)).LI_END;
         // Subdivide description into head-thorax-abdomen
         /*
           Mitchell's descriptions are formatted in a reliable order (at least at the body segment level),
@@ -53,7 +62,7 @@
           segment's name, and start a new list
         */
         if ($next_region && preg_match(${$next_region.'_regex'}, $line)) {
-          $line = '</ul><h2>'.ucfirst($next_region).'</h2><ul>'.$line;
+          $line = SECTION_END.SECTION_START.ucfirst($next_region).HEAD_END_UL_START.$line;
           $next_region = match ($next_region) {
             'head' => 'thorax',
             'thorax' => 'abdomen',
