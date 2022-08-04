@@ -8,13 +8,13 @@
       'head','mandible','cheek','ocell(us|i)','eye','face','flagell(um|a)','clype(us|al)'
     ),
     'thorax' => array(
-      'thorax','leg','tegula(e|)','coxa(e|)','fem(ur|oral|ora)','tibia(e|l|)','(basi|)tars(us|i|al)','wing','scut(um|al)','scutell(um|ar)'
+      'thorax','tegula(e|)','leg','coxa(e|)','fem(ur|oral|ora)','tibia(e|l|)','(basi|)tars(us|i|al)','wing','scut(um|al)','scutell(um|ar)','propodeum','pronot(um|al)'
     ),
     'abdomen' => array(
-      'abdomen','terg(um|al|a|ite)','stern(um|al|a|ite)','fascia(e|)'
+      'abdomen','terg(um|al|a|ite)','stern(um|al|a|ite)','fascia(e|)','pygidium'
     )
   );
-  // Convert anatomy lists into a regex search string for each region
+  // Convert dictionary into proper regex search strings for each region
   foreach ($anatomy_nouns as $region_name => $body_region) {
     ${$region_name.'_regex'} = '/';
     foreach ($body_region as $body_part) {
@@ -74,6 +74,7 @@
         return ucfirst(strtolower(preg_replace('/[^a-zA-Z ]/', '', $name)));
       }
       $species = filter_input(INPUT_POST, 'sp', FILTER_CALLBACK, ['options' => 'format_latin']);
+      // validate_latin($species);
     }
   }
  ?>
@@ -84,8 +85,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Bee pretty species reader</title>
     <link rel="stylesheet" href="bootswatch-sandstone.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="style.css">
-    <!-- JavaScript Bundle with Popper -->
     <script src="bootstrap.bundle.min.js"></script>
   </head>
   <body>
@@ -127,7 +128,7 @@
                 <button class="accordion-button bg-light collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#formContent" aria-expanded="false" aria-controls="formContent" name="button">
                   <?= "<span><i>$species</i> ({$_POST['sexRadio']})</span>" ?>
                 </button>
-                <?php else: ?>
+              <?php else: // not .collapsed, aria-expanded=true, different header text ?>
                 <button class="accordion-button bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#formContent" aria-expanded="true" aria-controls="formContent" name="button">
                   Enter species description
                 </button>
@@ -138,15 +139,16 @@
                   <label for="sp" class="form-label">Species</label>
                   <input type="text" class="form-control" name="sp" value="<?= $species ?? '' ?>">
                 </div>
-                <fieldset class="mb-3" id="sexSelectors">
+                <fieldset class="mb-3" id="sexSelect">
                   <div class="form-label">Description is for</div>
                   <ul class="list-unstyled mb-0">
                     <li class="form-check form-check-inline">
-                      <input class="form-check-input" type="radio" name="sexRadio" id="femaleRadio" value="female" checked>
+                      <?php //var_dump($_POST['sexRadio'] == 'male'); ?>
+                      <input class="form-check-input" type="radio" name="sexRadio" id="femaleRadio" value="female" <?= (!isset($_POST['sexRadio']) || $_POST['sexRadio'] == 'female') ? 'checked' : '' ?>>
                       <label class="form-check-label" for="femaleRadio">Female</label>
                     </li>
                     <li class="form-check form-check-inline">
-                      <input class="form-check-input" type="radio" name="sexRadio" id="maleRadio" value="male">
+                      <input class="form-check-input" type="radio" name="sexRadio" id="maleRadio" value="male" <?= (isset($_POST['sexRadio']) && $_POST['sexRadio'] == 'male') ? 'checked' : '' ?>>
                       <label class="form-check-label" for="maleRadio">Male</label>
                     </li>
                     <li class="form-check form-check-inline">
@@ -182,36 +184,63 @@
             <div class="card-body collapse bg-light border border-1 border-dark rounded" id="aboutText">
               <p>This is a simple text parser for making insect species descriptions a bit more readable to the less-experienced eye. It breaks up a dense block of text into shorter chunks that will eventually be possible to further mark, edit, and rearrange.</p>
               <p>The reader was designed for one use case in particular: <a href="https://www.discoverlife.org/mp/20q?search=Apoidea">Discover Life’s bee pages</a> for eastern North America, which include species descriptions from Theodore B. Mitchell’s <i>Bees of the Eastern United States</i> (<a href="https://projects.ncsu.edu/cals/entomology/museum/easternBees.php">full text</a>) and sometimes other sources. It should be useful with other kinds of insect species descriptions too, as long as they’re structured in about the same way and use most of the same anatomical terms that bees do.</p>
-              <p>To try the reader out on an arbitrary bee, click this button for the leaf-cutter bee <i>Megachile xylocopoides</i>:</p>
-              <button class="btn btn-dark" type="button" name="sample" onclick="autofillSample()">Autofill with sample</button>
+              <p>To try the reader out on an arbitrary bee, click this button for the leaf-cutter bee <a href="https://www.discoverlife.org/20/q?search=Megachile+xylocopoides"><i>Megachile xylocopoides</i></a>:</p>
+              <button class="btn btn-dark" type="button" name="sample" onclick="checkBeforeAutofill()">Autofill with sample</button>
             </div>
           </div>
         </aside>
       </div> <!-- row end -->
     </div> <!-- body container end -->
+    <div class="modal fade" id="confirmResetModal" tabindex="-1" aria-labelledby="confirmResetLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            Text has already been entered into the form. Are you sure you want to overwrite it with the sample text?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+            <button type="button" class="btn btn-primary" onclick="autofillSample()">Yes</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <footer></footer>
   </body>
 </html>
 <script>
+  const confirmModal = new bootstrap.Modal(document.getElementById('confirmResetModal'));
 
-
+  // Just restyles the bottom corners of the "?" tab when it's clicked on
   function reshapeAboutButton() {
     let sidebar = document.querySelector('#aboutToggle');
     sidebar.classList.toggle('rounded-bottom');
   }
 
+  // Make sure user is aware this action will overwrite any existing text in the form
+  function checkBeforeAutofill() {
+    let speciesInput = document.getElementById('speciesInput').lastElementChild;
+    let descriptionInput = document.getElementById('descriptionInput').lastElementChild;
+    if (speciesInput.value !== '' || descriptionInput.textContent !== '') {
+      confirmModal.toggle();
+    }
+    else autofillSample();
+  }
+
+  // ++make sure form is open and move focus to prettify button?
   function autofillSample() {
-    // if there's already text in the form, check that user definitely wants to overwrite it first
-    // if so, populate values
-
-    let form = document.querySelector('form');
-    // form. .value = sampleSpecies;
-    // form. .toggleAttribute('checked');
-    // form. .textContent = sampleText;
-    // put focus on prettify button?
-
     const sampleSpecies = "Megachile xylocopoides";
-    const sampleSex = "female";
-    const sampleText = "Length 14-15 mm.; entirely black, including tegulae and legs, mid and hind spurs brownish-testaceous; eyes very slightly convergent below; clypeal margin broadly and very slightly incurved; mandibles 5-dentate, a long bevelled edge between 2nd and 3rd teeth (fig. 53); lateral ocelli slightly nearer eyes than to margin of vertex; cheeks slightly narrower than eyes; vertex shining, rather irregularly and sparsely punctate, punctures becoming somewhat coarser toward margin, but with an impunctate area between ocelli, and punctures very minute, sparse and obscure between ocelli and eyes; cheeks becoming quite coarsely and closely punctate posteriorly and below, very finely and closely punctate toward eyes; face below anterior ocellus quite distinctly and deeply punctate punctures well separated, becoming somewhat finer and densely crowded laterally and along inner margins to clypeus, supraclypeal area shining, with only a few, scattered, rather coarse and deep punctures, clypeus also shining, punctures quite close, deep and irregular, becoming somewhat finer toward the slightly elevated and impunctate apical margin; pubescence of entire head and thorax black to deep fuscous, rather short, quite dense around antennae, on cheeks below, and quite copious on thorax laterally and posteriorly; scutum and scutellum somewhat shining, punctures rather fine but quite deep and distinct, sparse over most of scutum, becoming rather close anteriorly, and between notaulices and tegulae; scutellum broadly angulate, punctures sparse medially, but becoming quite close laterally, somewhat finer and closer on axillae; pleura densely and rather finely punctate; lateral faces of propodeum finely rugoso-punctate, posterior face smoother and more shining, with fine, obscure, shallow and quite irregular punctures; basitarsi of all legs nearly as broad and only slightly shorter than their respective tibiae; tegulae shining, very minutely and closely punctate; front wings deep fuliginous, hind wings somewhat less so, veins brownish piceous; abdominal terga only slightly depressed basally, basal margins of the depressions evident only on 2 and 3, apical margins of the terga deeply depressed laterally, fasciae absent; discal pubescence very short and obscure, suberect, entirely fuscous, somewhat more copious and elongate on basal tergum laterally; punctures of terga fine but distinct, rather uniformly close across basal tergum, becoming more sparse on the more apical terga, depressed margins more deeply, closely and finely punctate; tergum 6 nearly straight in profile, with no erect hairs visible, quite densely covered with fuscous, appressed tomentum, the close and fine punctures visible only at extreme sides of base; sternum 6 bare over apical half, with a bare apical lip projecting slightly beyond the dense, subapical fringe of short, fuscous hairs; scopa entirely black, punctures of sterna rather fine and close, becoming slightly coarser to sternum 5, apical margins of plates very narrowly hyaline, sternal fasciae entirely absent.";
+    const sampleText = "Length 10-13 mm.; black, including tegulae and mid and hind legs in large part, front legs largely yellowish; eyes slightly convergent below; clypeal margin very slightly and broadly produced beneath the dense beard; mandibles 4-dentate (fig. 53), with a broad, sub-basal, triangular, inferior process; apical segment of flagellum somewhat flattened and dilated; lateral ocelli slightly nearer eyes than to margin of vertex; cheeks subequal to eyes in width, strongly narrowed and slightly grooved below base of mandible, posterior margin of this area carinate, a dense fringe of snow-white and rather elongate hairs just above the disc toward posterior margin; vertex shining, punctures quite deep and distinct, not very sparse, well separated in large part, but with an impunctate area between ocelli, and largely impunctate between ocelli and eyes; cheeks quite coarsely and deeply punctate above, becoming very densely and finely tessellate below; face below ocelli beneath dense pubescence very finely and closely rugoso-punctate; pubescence of face creamy-white, dense, copious and quite elongate, rather thin and blackish on vertex, short, thin and whitish on cheeks; pleura largely fuscous pubescent; scutum with erect but rather short and thin, black pubescence, becoming rather narrowly whitish anteriorly, scutellum and posterior face of propodeum with quite elongate, erect, whitish pubescence; punctures of scutum and scutellum quite deep and distinct, rather coarse, somewhat separated medially, becoming close laterally, crowded between notaulices and tegulae, slightly separated on axillae; pleura rather finely and densely rugose; lateral faces of propodeum very finely but rather closely punctate, posterior face somewhat more shining, with minute, close, rather shallow and vague punctures; front coxal spines elongate but rather narrow, subacute apically, each coxa with a small, inconspicuous patch of rather pale setae anterior to the spine, otherwise quite closely and deeply punctate, with a dense patch of pale pubescence laterally; mid tibial spurs absent; front tarsi pale yellow, very broadly dilated, segments 1 and 2 subequal in length on posterior margin, but basitarsus broadly expanded apically, very deeply excavated, overlying segment 2 nearly to its apex, this segment more narrowly produced anteriorly, posterior fringe rather short, hairs tipped with fuscous beneath; front tibia piceous on outer face, yellowish on the other faces, front femora piceous toward apex on posterior face, lower margin conspicuously carinate, otherwise pale yellowish, with a conspicuous, yellowish-white posterior fringe, lower basal margin angulate; mid tarsi slender and very much elongated, rather dark, with brownish-fuscous pubescence and a short, posterior fringe; hind basitarsus rather short, piceous, densely brownish pubescent beneath, forming rather conspicuous anterior and posterior fringes; tegulae very minutely and closely punctate; front wings quite deeply infuscated, hind wings more nearly subhyaline, veins brownish-piceous; abdominal terga 2-5 rather deeply depressed across base, basal margins of the grooves more or less distinctly carinate, apical margins rather deeply depressed laterally on 2 and 3, depression entire on 4 and 5, very deep and abrupt laterally; punctures minute and rather close on basal tergum, minute and well separated on 2 laterally, somewhat closer medially, somewhat deeper and more distinct on 3-5, well separated on 3 becoming closer on 4 and very close on 5; tergum 1 with erect, pale pubescence medially, becoming somewhat more fuscous laterally; discal pubescence of following terga short, erect and fuscous, apical fasciae entirely absent; tergum 6 completely vertical, very densely and finely rugoso-punctate, quite deeply depressed in center, the canna low but distinct, broadly and shallowly emarginate, the two resulting angles rather narrowly rounded, apical margin without visible teeth; tergum 7 largely hidden, very broadly and obtusely angulate; sterna 1-4 exposed, punctures rather close and fine in general, becoming rather minute and sparse toward margins of 2 and 3, rims very narrowly yellowish hyaline on 2 and 3, somewhat broader on 4; setose area of sternum 5 rather broadly out- curved apically, separated from basal margin of the plate by a rather broad, membraneous area, setae very fine and dense (fig. 54); setose areas of sternum 6 not completely separated medially, setae rather elongate and more sparse, apical lobe narrowly produced and rounded; gonocoxites robust, rather abruptly narrowed above base, apex conspicuously trilobate (figs. 50 & 55).";
+
+    confirmModal.hide();
+
+    let speciesInput = document.getElementById('speciesInput').lastElementChild;
+    let descriptionInput = document.getElementById('descriptionInput').lastElementChild;
+    speciesInput.value = sampleSpecies;
+    descriptionInput.textContent = sampleText;
+    // sample text is for male
+    document.getElementById('maleRadio').checked = true;
   }
 </script>
