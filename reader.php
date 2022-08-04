@@ -15,10 +15,10 @@
     )
   );
 
-  const SECTION_START = '<div class="card mb-3 border-dark"><div class="card-header bg-dark text-light"><h2 class="card-title mb-0">';
+  const SECTION_START = '<div class="card mb-3 border-secondary"><div class="card-header bg-secondary text-light"><h2 class="card-title mb-0">';
   const HEAD_END_UL_START = '</h2></div><ul class="list-group list-group-flush">';
-  const LI_START = '<li class="list-group-item">';
-  const LI_END = '</li>';
+  const LI_START = '<li class="list-group-item d-flex ps-0"><a href="#" class="bi-bookmark-heart" onclick="toggleHighlight()" role="button" aria-label="Highlight item"></a><span>';
+  const LI_END = '</span></li>';
   const SECTION_END = '</ul></div>';
 
   // Convert dictionary into proper regex search strings for each region
@@ -160,10 +160,6 @@
                       <input class="form-check-input" type="radio" name="sexRadio" id="maleRadio" value="male" <?= (isset($_POST['sexRadio']) && $_POST['sexRadio'] == 'male') ? 'checked' : '' ?>>
                       <label class="form-check-label" for="maleRadio">Male</label>
                     </li>
-                    <li class="form-check form-check-inline">
-                      <input class="form-check-input" type="radio" name="sexRadio" id="bothRadio" disabled>
-                      <label class="form-check-label" for="bothRadio">Both (WIP)</label>
-                    </li>
                   </ul>
                 </fieldset>
                 <div class="mb-3" id="descriptionInput">
@@ -221,6 +217,18 @@
 </html>
 <script>
   const confirmModal = new bootstrap.Modal(document.getElementById('confirmResetModal'));
+
+  function toggleHighlight(event) {
+    if (!event) { event = window.event; }
+    event.preventDefault();
+    let icon = (event.target || event.srcElement);
+    icon.classList.toggle('bi-bookmark-heart');
+    icon.classList.toggle('bi-bookmark-heart-fill');
+    let text = icon.nextElementSibling.classList.toggle('fw-bold');
+    let li = icon.parentNode;
+    li.classList.toggle('list-group-item-success');
+  }
+
 
   // Just restyles the bottom corners of the "?" tab when it's clicked on
   function reshapeAboutButton() {

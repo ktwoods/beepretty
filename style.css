@@ -30,3 +30,8 @@ h2 {
 #aboutText {
   border-top-left-radius: 0 !important;
 }
+
+li a {
+  padding-left: var(--bs-list-group-item-padding-x);
+  padding-right: var(--bs-list-group-item-padding-x);
+}
