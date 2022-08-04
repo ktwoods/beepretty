@@ -182,17 +182,15 @@
         there are a lot of long words so it doesn't squish well).
         -->
         <aside class="col-md-4 col-xl order-1 order-md-3 ps-md-0 mb-2">
-          <div class="card" id="aboutCard">
-            <div class="card-header">
-              <button class="btn bg-dark text-light rounded-0 rounded-bottom" id="aboutToggle" type="button" data-bs-toggle="collapse" data-bs-target="#aboutText" aria-expanded="false" aria-controls="aboutText" onclick="reshapeAboutButton()">?</button>
+            <button class="btn bg-dark text-light rounded-0 rounded-bottom" id="aboutToggle" type="button" data-bs-toggle="collapse" data-bs-target="#aboutText" aria-expanded="false" aria-controls="aboutText" onclick="reshapeAboutButton()">?</button>
+            <div class="collapse" id="aboutText">
+              <div class="card card-body bg-light border border-1 border-dark rounded" id="aboutText">
+                <p>This is a simple text parser for making insect species descriptions a bit more readable to the less-experienced eye. It breaks up a dense block of text into shorter chunks that will eventually be possible to further mark, edit, and rearrange.</p>
+                <p>The reader was designed for one use case in particular: <a href="https://www.discoverlife.org/mp/20q?search=Apoidea">Discover Life’s bee pages</a> for eastern North America, which include species descriptions from Theodore B. Mitchell’s <i>Bees of the Eastern United States</i> (<a href="https://projects.ncsu.edu/cals/entomology/museum/easternBees.php">full text</a>) and sometimes other sources. It should be useful with other kinds of insect species descriptions too, as long as they’re structured in about the same way and use most of the same anatomical terms that bees do.</p>
+                <p>To try the reader out on an arbitrary bee, click this button for the leaf-cutter bee <a href="https://www.discoverlife.org/20/q?search=Megachile+xylocopoides"><i>Megachile xylocopoides</i></a>:</p>
+                <button class="btn btn-dark" type="button" name="sample" onclick="checkBeforeAutofill()">Autofill with sample</button>
+              </div>
             </div>
-            <div class="card-body collapse bg-light border border-1 border-dark rounded" id="aboutText">
-              <p>This is a simple text parser for making insect species descriptions a bit more readable to the less-experienced eye. It breaks up a dense block of text into shorter chunks that will eventually be possible to further mark, edit, and rearrange.</p>
-              <p>The reader was designed for one use case in particular: <a href="https://www.discoverlife.org/mp/20q?search=Apoidea">Discover Life’s bee pages</a> for eastern North America, which include species descriptions from Theodore B. Mitchell’s <i>Bees of the Eastern United States</i> (<a href="https://projects.ncsu.edu/cals/entomology/museum/easternBees.php">full text</a>) and sometimes other sources. It should be useful with other kinds of insect species descriptions too, as long as they’re structured in about the same way and use most of the same anatomical terms that bees do.</p>
-              <p>To try the reader out on an arbitrary bee, click this button for the leaf-cutter bee <a href="https://www.discoverlife.org/20/q?search=Megachile+xylocopoides"><i>Megachile xylocopoides</i></a>:</p>
-              <button class="btn btn-dark" type="button" name="sample" onclick="checkBeforeAutofill()">Autofill with sample</button>
-            </div>
-          </div>
         </aside>
       </div> <!-- row end -->
     </div> <!-- body container end -->
@@ -224,7 +222,7 @@
     let icon = (event.target || event.srcElement);
     icon.classList.toggle('bi-bookmark-heart');
     icon.classList.toggle('bi-bookmark-heart-fill');
-    let text = icon.nextElementSibling.classList.toggle('fw-bold');
+    // let text = icon.nextElementSibling.classList.toggle('fw-bold');
     let li = icon.parentNode;
     li.classList.toggle('list-group-item-success');
   }
